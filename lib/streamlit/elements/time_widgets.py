@@ -188,7 +188,7 @@ class TimeWidgetsMixin:
             value = datetime.now().date()
 
         single_value = isinstance(value, (date, datetime))
-        range_value = isinstance(value, (list, tuple)) and len(value) in (0, 1, 2)
+        range_value = isinstance(value, (list, tuple)) and len(value) in {0, 1, 2}
         if not single_value and not range_value:
             raise StreamlitAPIException(
                 "DateInput value should either be an date/datetime or a list/tuple of "

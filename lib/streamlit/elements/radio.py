@@ -91,8 +91,9 @@ class RadioMixin:
 
         if not isinstance(index, int):
             raise StreamlitAPIException(
-                "Radio Value has invalid type: %s" % type(index).__name__
+                f"Radio Value has invalid type: {type(index).__name__}"
             )
+
 
         if len(options) > 0 and not 0 <= index < len(options):
             raise StreamlitAPIException(
@@ -115,9 +116,7 @@ class RadioMixin:
             )
 
         def serialize_radio(v):
-            if len(options) == 0:
-                return 0
-            return index_(options, v)
+            return 0 if len(options) == 0 else index_(options, v)
 
         current_value, set_frontend_value = register_widget(
             "radio",

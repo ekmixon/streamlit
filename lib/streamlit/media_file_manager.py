@@ -35,13 +35,7 @@ PREFERRED_MIMETYPE_EXTENSION_MAP = {
 def _get_session_id():
     """Semantic wrapper to retrieve current ReportSession ID."""
     ctx = get_report_ctx()
-    if ctx is None:
-        # This is only None when running "python myscript.py" rather than
-        # "streamlit run myscript.py". In which case the session ID doesn't
-        # matter and can just be a constant, as there's only ever "session".
-        return "dontcare"
-    else:
-        return ctx.session_id
+    return "dontcare" if ctx is None else ctx.session_id
 
 
 def _calculate_file_id(data, mimetype):
@@ -73,10 +67,7 @@ def _get_extension_for_mimetype(mimetype: str) -> str:
         return PREFERRED_MIMETYPE_EXTENSION_MAP[mimetype]
 
     extension = mimetypes.guess_extension(mimetype)
-    if extension is None:
-        return ""
-
-    return extension
+    return "" if extension is None else extension
 
 
 class MediaFile(object):
@@ -93,7 +84,7 @@ class MediaFile(object):
     @property
     def url(self):
         extension = _get_extension_for_mimetype(self._mimetype)
-        return "{}/{}{}".format(STATIC_MEDIA_ENDPOINT, self.id, extension)
+        return f"{STATIC_MEDIA_ENDPOINT}/{self.id}{extension}"
 
     @property
     def id(self):
@@ -133,7 +124,7 @@ class MediaFileManager(object):
 
     def __init__(self):
         # Dict of file ID to MediaFile.
-        self._files_by_id = dict()
+        self._files_by_id = {}
 
         # Dict[session ID][coordinates] -> MediaFile.
         self._files_by_session_and_coord = collections.defaultdict(

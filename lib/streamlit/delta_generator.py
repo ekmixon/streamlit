@@ -221,9 +221,7 @@ class DeltaGenerator(
         return util.repr_(self)
 
     def __enter__(self):
-        # with block started
-        ctx = get_report_ctx()
-        if ctx:
+        if ctx := get_report_ctx():
             ctx.dg_stack.append(self)
 
     def __exit__(self, type, value, traceback):
@@ -530,12 +528,10 @@ class DeltaGenerator(
             raise StreamlitAPIException("Only existing elements can `add_rows`.")
 
         # Accept syntax st.add_rows(df).
-        if data is not None and len(kwargs) == 0:
+        if data is not None and not kwargs:
             name = ""
-        # Accept syntax st.add_rows(foo=df).
         elif len(kwargs) == 1:
             name, data = kwargs.popitem()
-        # Raise error otherwise.
         else:
             raise StreamlitAPIException(
                 "Wrong number of arguments to add_rows()."
@@ -583,12 +579,10 @@ class DeltaGenerator(
             raise StreamlitAPIException("Only existing elements can `add_rows`.")
 
         # Accept syntax st.add_rows(df).
-        if data is not None and len(kwargs) == 0:
+        if data is not None and not kwargs:
             name = ""
-        # Accept syntax st.add_rows(foo=df).
         elif len(kwargs) == 1:
             name, data = kwargs.popitem()
-        # Raise error otherwise.
         else:
             raise StreamlitAPIException(
                 "Wrong number of arguments to add_rows()."
@@ -689,9 +683,7 @@ def _value_or_dg(value, dg):
     """
     if value is NoValue:
         return None
-    if value is None:
-        return dg
-    return value
+    return dg if value is None else value
 
 
 def _enqueue_message(msg):

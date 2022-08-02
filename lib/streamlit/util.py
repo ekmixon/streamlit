@@ -96,9 +96,7 @@ def _open_browser_with_command(command, url):
 
 def _maybe_tuple_to_list(item):
     """Convert a tuple to a list. Leave as is if it's not a tuple."""
-    if isinstance(item, tuple):
-        return list(item)
-    return item
+    return list(item) if isinstance(item, tuple) else item
 
 
 def repr_(cls) -> str:
@@ -126,7 +124,7 @@ def index_(iterable, x) -> int:
     for i, value in enumerate(iterable):
         if x == value:
             return i
-    raise ValueError("{} is not in iterable".format(str(x)))
+    raise ValueError(f"{str(x)} is not in iterable")
 
 
 # TODO: Move this into errors.py? Replace with StreamlitAPIException?

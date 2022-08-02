@@ -284,10 +284,10 @@ class ReportSession(object):
             self._clear_queue()
             self._enqueue_new_report_message()
 
-        elif (
-            event == ScriptRunnerEvent.SCRIPT_STOPPED_WITH_SUCCESS
-            or event == ScriptRunnerEvent.SCRIPT_STOPPED_WITH_COMPILE_ERROR
-        ):
+        elif event in [
+            ScriptRunnerEvent.SCRIPT_STOPPED_WITH_SUCCESS,
+            ScriptRunnerEvent.SCRIPT_STOPPED_WITH_COMPILE_ERROR,
+        ]:
 
             if self._state != ReportSessionState.SHUTDOWN_REQUESTED:
                 self._state = ReportSessionState.REPORT_NOT_RUNNING
@@ -528,7 +528,7 @@ class ReportSession(object):
 
         """
         if self._state == ReportSessionState.SHUTDOWN_REQUESTED:
-            LOGGER.warning("Discarding %s request after shutdown" % request)
+            LOGGER.warning(f"Discarding {request} request after shutdown")
             return
 
         self._script_request_queue.enqueue(request, data)
@@ -599,7 +599,7 @@ class ReportSession(object):
 
         except Exception as e:
             # Horrible hack to show something if something breaks.
-            err_msg = "%s: %s" % (type(e).__name__, str(e) or "No further details.")
+            err_msg = f'{type(e).__name__}: {str(e) or "No further details."}'
             progress_msg = ForwardMsg()
             progress_msg.report_uploaded = err_msg
             yield ws.write_message(serialize_forward_msg(progress_msg), binary=True)

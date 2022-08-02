@@ -53,7 +53,7 @@ def get_fqn(the_type):
     """Get module.type_name for a given type."""
     module = the_type.__module__
     name = the_type.__qualname__
-    return "%s.%s" % (module, name)
+    return f"{module}.{name}"
 
 
 def get_fqn_type(obj):
@@ -178,9 +178,7 @@ def _is_plotly_obj(obj):
 def _is_list_of_plotly_objs(obj):
     if type(obj) is not list:
         return False
-    if len(obj) == 0:
-        return False
-    return all(_is_plotly_obj(item) for item in obj)
+    return False if len(obj) == 0 else all(_is_plotly_obj(item) for item in obj)
 
 
 def _is_probably_plotly_dict(obj):
@@ -196,10 +194,7 @@ def _is_probably_plotly_dict(obj):
     if any(_is_plotly_obj(v) for v in obj.values()):
         return True
 
-    if any(_is_list_of_plotly_objs(v) for v in obj.values()):
-        return True
-
-    return False
+    return any((_is_list_of_plotly_objs(v) for v in obj.values()))
 
 
 _FUNCTION_TYPE = type(lambda: 0)
@@ -216,9 +211,11 @@ def is_namedtuple(x):
     if len(b) != 1 or b[0] != tuple:
         return False
     f = getattr(t, "_fields", None)
-    if not isinstance(f, tuple):
-        return False
-    return all(type(n).__name__ == "str" for n in f)
+    return (
+        all(type(n).__name__ == "str" for n in f)
+        if isinstance(f, tuple)
+        else False
+    )
 
 
 def is_pandas_styler(obj):

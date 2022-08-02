@@ -40,7 +40,7 @@ class ReportQueue(object):
 
             # Map: (delta_path, msg.metadata.delta_id) -> _queue.indexof(msg),
             # where delta_path = (container, parent block path as a string)
-            self._delta_index_map = dict()
+            self._delta_index_map = {}
 
     def __repr__(self) -> str:
         return util.repr_(self)
@@ -60,9 +60,7 @@ class ReportQueue(object):
         return len(self._queue) == 0
 
     def get_initial_msg(self):
-        if len(self._queue) > 0:
-            return self._queue[0]
-        return None
+        return self._queue[0] if len(self._queue) > 0 else None
 
     def enqueue(self, msg):
         """Add message into queue, possibly composing it with another message.
@@ -111,7 +109,7 @@ class ReportQueue(object):
 
     def _clear(self):
         self._queue = []
-        self._delta_index_map = dict()
+        self._delta_index_map = {}
 
     def clear(self):
         """Clear this queue."""
@@ -134,10 +132,7 @@ def compose_deltas(old_delta, new_delta):
     """
     new_delta_type = new_delta.WhichOneof("type")
 
-    if new_delta_type == "new_element":
-        return new_delta
-
-    elif new_delta_type == "add_block":
+    if new_delta_type in ["new_element", "add_block"]:
         return new_delta
 
     elif new_delta_type == "add_rows":

@@ -53,7 +53,7 @@ class ReportSessionTest(unittest.TestCase):
                 return True
             if name == "runner.installTracer":
                 return False
-            raise RuntimeError("Unexpected argument to get_option: %s" % name)
+            raise RuntimeError(f"Unexpected argument to get_option: {name}")
 
         patched_config.get_option.side_effect = get_option
 
@@ -92,7 +92,7 @@ class ReportSessionTest(unittest.TestCase):
                 return True
             if name == "runner.installTracer":
                 return True
-            raise RuntimeError("Unexpected argument to get_option: %s" % name)
+            raise RuntimeError(f"Unexpected argument to get_option: {name}")
 
         patched_config.get_option.side_effect = get_option
 
@@ -247,11 +247,7 @@ class ReportSessionNewReportTest(tornado.testing.AsyncTestCase):
     @tornado.testing.gen_test
     def test_enqueue_new_report_message(self, _1, _2, patched_config):
         def get_option(name):
-            if name == "server.runOnSave":
-                # Just to avoid starting the watcher for no reason.
-                return False
-
-            return config.get_option(name)
+            return False if name == "server.runOnSave" else config.get_option(name)
 
         patched_config.get_option.side_effect = get_option
         patched_config.get_options_for_section.side_effect = (

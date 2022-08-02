@@ -159,14 +159,11 @@ class FileUploaderMixin:
             return return_value
 
         def serialize_file_uploader(
-            files: Optional[Union[List[UploadedFile], UploadedFile]]
-        ) -> List[int]:
+                files: Optional[Union[List[UploadedFile], UploadedFile]]
+            ) -> List[int]:
             if not files:
                 return []
-            if isinstance(files, list):
-                ids = [f.id for f in files]
-            else:
-                ids = [files.id]
+            ids = [f.id for f in files] if isinstance(files, list) else [files.id]
             ctx = get_report_ctx()
             if ctx is None:
                 return []

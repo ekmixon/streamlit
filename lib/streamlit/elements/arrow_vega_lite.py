@@ -122,12 +122,7 @@ def marshall(
     # Support passing no spec arg, but filling it with kwargs.
     # Example:
     #   marshall(proto, baz='boz')
-    if spec is None:
-        spec = dict()
-    else:
-        # Clone the spec dict, since we may be mutating it.
-        spec = dict(spec)
-
+    spec = {} if spec is None else dict(spec)
     # Support passing in kwargs. Example:
     #   marshall(proto, {foo: 'bar'}, baz='boz')
     if len(kwargs):
@@ -135,7 +130,7 @@ def marshall(
         # This only works for string keys, but kwarg keys are strings anyways.
         spec = dict(spec, **dicttools.unflatten(kwargs, _CHANNELS))
 
-    if len(spec) == 0:
+    if not spec:
         raise ValueError("Vega-Lite charts require a non-empty spec dict.")
 
     if "autosize" not in spec:
@@ -175,33 +170,29 @@ def marshall(
 
 
 # See https://vega.github.io/vega-lite/docs/encoding.html
-_CHANNELS = set(
-    [
-        "x",
-        "y",
-        "x2",
-        "y2",
-        "xError",
-        "yError2",
-        "xError",
-        "yError2",
-        "longitude",
-        "latitude",
-        "color",
-        "opacity",
-        "fillOpacity",
-        "strokeOpacity",
-        "strokeWidth",
-        "size",
-        "shape",
-        "text",
-        "tooltip",
-        "href",
-        "key",
-        "order",
-        "detail",
-        "facet",
-        "row",
-        "column",
-    ]
-)
+_CHANNELS = {
+    "x",
+    "y",
+    "x2",
+    "y2",
+    "xError",
+    "yError2",
+    "longitude",
+    "latitude",
+    "color",
+    "opacity",
+    "fillOpacity",
+    "strokeOpacity",
+    "strokeWidth",
+    "size",
+    "shape",
+    "text",
+    "tooltip",
+    "href",
+    "key",
+    "order",
+    "detail",
+    "facet",
+    "row",
+    "column",
+}

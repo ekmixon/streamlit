@@ -61,8 +61,7 @@ def _get_command_line_seen_by_server(command):
     assert len(all_command_line_json_found) == 1
     command_line_json = all_command_line_json_found[0]
 
-    command_line = json.loads(command_line_json)[key]
-    return command_line
+    return json.loads(command_line_json)[key]
 
 
 def _test_agrees_with_expected_with_click_feedback(provided, seen, expected):

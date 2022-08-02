@@ -41,17 +41,15 @@ class FileWatcherTest(unittest.TestCase):
         msg = "\n  $ xcode-select --install"
         calls = [
             call(
-                "  %s" % "For better performance, install the Watchdog module:",
+                '  For better performance, install the Watchdog module:',
                 fg="blue",
                 bold=True,
             ),
-            call(
-                """%s
+            call("""%s
   $ pip install watchdog
-            """
-                % msg
-            ),
+            """ % msg),
         ]
+
         mock_echo.assert_has_calls(calls)
 
     def test_report_watchdog_availability_nonmac(self):
@@ -65,17 +63,15 @@ class FileWatcherTest(unittest.TestCase):
         msg = ""
         calls = [
             call(
-                "  %s" % "For better performance, install the Watchdog module:",
+                '  For better performance, install the Watchdog module:',
                 fg="blue",
                 bold=True,
             ),
-            call(
-                """%s
+            call("""%s
   $ pip install watchdog
-            """
-                % msg
-            ),
+            """ % msg),
         ]
+
         mock_echo.assert_has_calls(calls)
 
     @patch("streamlit.watcher.file_watcher.PollingFileWatcher")

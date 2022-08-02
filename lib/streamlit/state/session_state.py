@@ -87,29 +87,27 @@ class WStates(MutableMapping[str, Any]):
 
     def __getitem__(self, k: str) -> Any:
         item = self.states.get(k)
-        if item is not None:
-            if isinstance(item, Value):
-                return item.value
-            else:
-                metadata = self.widget_metadata.get(k)
-                if metadata is None:
-                    # No deserializer, which should only happen if state is gotten from a reconnecting browser
-                    # and the script is trying to access it. Pretend it doesn't exist.
-                    raise KeyError(k)
-                value = item.value.__getattribute__(item.value.WhichOneof("value"))
-
-                # Array types are messages with data in a `data` field
-                if metadata.value_type in [
-                    "double_array_value",
-                    "int_array_value",
-                    "string_array_value",
-                ]:
-                    value = value.data
-                deserialized = metadata.deserializer(value, metadata.id)
-                self.states[k] = Value(deserialized)
-                return deserialized
-        else:
+        if item is None:
             raise KeyError(k)
+        if isinstance(item, Value):
+            return item.value
+        metadata = self.widget_metadata.get(k)
+        if metadata is None:
+            # No deserializer, which should only happen if state is gotten from a reconnecting browser
+            # and the script is trying to access it. Pretend it doesn't exist.
+            raise KeyError(k)
+        value = item.value.__getattribute__(item.value.WhichOneof("value"))
+
+        # Array types are messages with data in a `data` field
+        if metadata.value_type in [
+            "double_array_value",
+            "int_array_value",
+            "string_array_value",
+        ]:
+            value = value.data
+        deserialized = metadata.deserializer(value, metadata.id)
+        self.states[k] = Value(deserialized)
+        return deserialized
 
     def __setitem__(self, k: str, v: WState):
         self.states[k] = v
@@ -124,8 +122,7 @@ class WStates(MutableMapping[str, Any]):
         # For this and many other methods, we can't simply delegate to the
         # states field, because we need to invoke `__getitem__` for any
         # values, to handle deserialization and unwrapping of values.
-        for key in self.states:
-            yield key
+        yield from self.states
 
     def keys(self) -> Set[str]:
         return set(self.states.keys())
@@ -159,28 +156,25 @@ class WStates(MutableMapping[str, Any]):
         widget = WidgetStateProto()
         widget.id = k
         item = self.states.get(k)
-        if item is not None:
-            if isinstance(item, Value):
-                metadata = self.widget_metadata.get(k)
-                if metadata is None:
-                    return default
-                else:
-                    field = metadata.value_type
-                    serialized = metadata.serializer(item.value)
-                    if field in (
-                        "double_array_value",
-                        "int_array_value",
-                        "string_array_value",
-                    ):
-                        arr = getattr(widget, field)
-                        arr.data.extend(serialized)
-                    else:
-                        setattr(widget, field, serialized)
-                    return widget
-            else:
-                return item.value
-        else:
+        if item is None:
             return default
+        if not isinstance(item, Value):
+            return item.value
+        metadata = self.widget_metadata.get(k)
+        if metadata is None:
+            return default
+        field = metadata.value_type
+        serialized = metadata.serializer(item.value)
+        if field in (
+            "double_array_value",
+            "int_array_value",
+            "string_array_value",
+        ):
+            arr = getattr(widget, field)
+            arr.data.extend(serialized)
+        else:
+            setattr(widget, field, serialized)
+        return widget
 
     def as_widget_states(self) -> List[WidgetStateProto]:
         states = [
@@ -381,22 +375,19 @@ class SessionState(MutableMapping[str, Any]):
     def _widget_changed(self, widget_id: str) -> bool:
         new_value = self._new_widget_state.get(widget_id)
         old_value = self._old_state.get(widget_id)
-        changed: bool = new_value != old_value
-        return changed
+        return new_value != old_value
 
     def reset_triggers(self) -> None:
         """Sets all trigger values in our state dictionary to False."""
         for state_id in self._new_widget_state:
             metadata = self._new_widget_state.widget_metadata.get(state_id)
-            if metadata is not None:
-                if metadata.value_type == "trigger_value":
-                    self._new_widget_state[state_id] = Value(False)
+            if metadata is not None and metadata.value_type == "trigger_value":
+                self._new_widget_state[state_id] = Value(False)
 
         for state_id in self._old_state:
             metadata = self._new_widget_state.widget_metadata.get(state_id)
-            if metadata is not None:
-                if metadata.value_type == "trigger_value":
-                    self._old_state[state_id] = False
+            if metadata is not None and metadata.value_type == "trigger_value":
+                self._old_state[state_id] = False
 
     def cull_nonexistent(self, widget_ids: Set[str]):
         self._new_widget_state.cull_nonexistent(widget_ids)
@@ -425,8 +416,7 @@ class SessionState(MutableMapping[str, Any]):
 
     def get_value_for_registration(self, widget_id: str) -> Any:
         try:
-            value = self[widget_id]
-            return value
+            return self[widget_id]
         except KeyError:
             metadata = self._new_widget_state.widget_metadata[widget_id]
             return metadata.deserializer(None, metadata.id)

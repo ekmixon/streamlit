@@ -230,8 +230,8 @@ def _get_css_styles(translated_style):
                 raise RuntimeError(
                     'Failed to parse cellstyle selector "%s"' % cell_selector
                 )
-            row = int(match.group(1))
-            col = int(match.group(2))
+            row = int(match[1])
+            col = int(match[2])
             css_declarations = []
             props = cell_style["props"]
             for prop in props:
@@ -305,8 +305,8 @@ def _get_custom_display_values(df, translated_style):
 
             # Only store display values that differ from the cell's default
             if has_custom_display_value(cell):
-                row = int(match.group(1))
-                col = int(match.group(2))
+                row = int(match[1])
+                col = int(match[2])
                 display_values[(row, col)] = str(cell["display_value"])
 
     return display_values
@@ -398,21 +398,14 @@ def _marshall_any_array(pandas_array, proto_array):
         proto_array.int64s.data.extend(pandas_array)
     elif pandas_array.dtype == np.object:
         proto_array.strings.data.extend(map(str, pandas_array))
-    # dtype='string', <class 'pandas.core.arrays.string_.StringDtype'>
-    # NOTE: StringDtype is considered experimental.
-    # The implementation and parts of the API may change without warning.
     elif pandas_array.dtype.name == "string":
         proto_array.strings.data.extend(map(str, pandas_array))
-    # Setting a timezone changes (dtype, dtype.type) from
-    #   'datetime64[ns]', <class 'numpy.datetime64'>
-    # to
-    #   datetime64[ns, UTC], <class 'pandas._libs.tslibs.timestamps.Timestamp'>
     elif pandas_array.dtype.name.startswith("datetime64"):
         # Just convert straight to ISO 8601, preserving timezone
         # awareness/unawareness. The frontend will render it correctly.
         proto_array.datetimes.data.extend(pandas_array.map(datetime.datetime.isoformat))
     else:
-        raise NotImplementedError("Dtype %s not understood." % pandas_array.dtype)
+        raise NotImplementedError(f"Dtype {pandas_array.dtype} not understood.")
 
 
 def add_rows(delta1, delta2, name=None):
@@ -522,7 +515,7 @@ def _get_data_frame(delta, name=None):
 
         # Some element types don't support named datasets.
         if name and element_type in ("data_frame", "table", "chart"):
-            raise ValueError("Dataset names not supported for st.%s" % element_type)
+            raise ValueError(f"Dataset names not supported for st.{element_type}")
 
         if element_type in "data_frame":
             return delta.new_element.data_frame
@@ -541,15 +534,15 @@ def _get_data_frame(delta, name=None):
                 return chart_proto.datasets[0].data
             else:
                 return chart_proto.data
-        # TODO: Support DeckGL. Need to figure out how to handle layer indices
-        # first.
+            # TODO: Support DeckGL. Need to figure out how to handle layer indices
+            # first.
 
     elif delta_type == "add_rows":
         if delta.add_rows.has_name and name != delta.add_rows.name:
             raise ValueError('No dataset found with name "%s".' % name)
         return delta.add_rows.data
     else:
-        raise ValueError("Cannot extract DataFrame from %s." % delta_type)
+        raise ValueError(f"Cannot extract DataFrame from {delta_type}.")
 
 
 def _get_or_create_dataset(datasets_proto, name):

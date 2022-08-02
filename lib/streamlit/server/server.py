@@ -180,27 +180,26 @@ def start_listening_tcp_socket(http_server):
             break  # It worked! So let's break out of the loop.
 
         except (OSError, socket.error) as e:
-            if e.errno == errno.EADDRINUSE:
-                if server_port_is_manually_set():
-                    LOGGER.error("Port %s is already in use", port)
-                    sys.exit(1)
-                else:
-                    LOGGER.debug(
-                        "Port %s already in use, trying to use the next one.", port
-                    )
-                    port += 1
-                    # Save port 3000 because it is used for the development
-                    # server in the front end.
-                    if port == 3000:
-                        port += 1
-
-                    config.set_option(
-                        "server.port", port, ConfigOption.STREAMLIT_DEFINITION
-                    )
-                    call_count += 1
-            else:
+            if e.errno != errno.EADDRINUSE:
                 raise
 
+            if server_port_is_manually_set():
+                LOGGER.error("Port %s is already in use", port)
+                sys.exit(1)
+            else:
+                LOGGER.debug(
+                    "Port %s already in use, trying to use the next one.", port
+                )
+                port += 1
+                # Save port 3000 because it is used for the development
+                # server in the front end.
+                if port == 3000:
+                    port += 1
+
+                config.set_option(
+                    "server.port", port, ConfigOption.STREAMLIT_DEFINITION
+                )
+                call_count += 1
     if call_count >= MAX_PORT_SEARCH_RETRIES:
         raise RetriesExceeded(
             "Cannot start Streamlit server. Port %s is already in use, and "
@@ -265,10 +264,7 @@ class Server(object):
         """Return the ReportSession corresponding to the given id, or None if
         no such session exists."""
         session_info = self._get_session_info(session_id)
-        if session_info is None:
-            return None
-
-        return session_info.session
+        return None if session_info is None else session_info.session
 
     def on_files_updated(self, session_id: str) -> None:
         """Event handler for UploadedFileManager.on_file_added.
@@ -312,9 +308,7 @@ class Server(object):
         self._ioloop.spawn_callback(self._loop_coroutine, on_started)
 
     def get_debug(self) -> Dict[str, Dict[str, Any]]:
-        if self._report:
-            return {"report": self._report.get_debug()}
-        return {}
+        return {"report": self._report.get_debug()} if self._report else {}
 
     def _create_app(self):
         """Create our tornado web app.
@@ -357,15 +351,20 @@ class Server(object):
             (
                 make_url_path_regex(base, "assets/(.*)"),
                 AssetsFileHandler,
-                {"path": "%s/" % file_util.get_assets_dir()},
+                {"path": f"{file_util.get_assets_dir()}/"},
             ),
-            (make_url_path_regex(base, "media/(.*)"), MediaFileHandler, {"path": ""}),
+            (
+                make_url_path_regex(base, "media/(.*)"),
+                MediaFileHandler,
+                {"path": ""},
+            ),
             (
                 make_url_path_regex(base, "component/(.*)"),
                 ComponentRequestHandler,
                 dict(registry=ComponentRegistry.instance()),
             ),
         ]
+
 
         if config.get_option("global.developmentMode"):
             LOGGER.debug("Serving static content from the Node dev server")
@@ -378,11 +377,18 @@ class Server(object):
                     (
                         make_url_path_regex(base, "(.*)"),
                         StaticFileHandler,
-                        {"path": "%s/" % static_path, "default_filename": "index.html"},
+                        {
+                            "path": f"{static_path}/",
+                            "default_filename": "index.html",
+                        },
                     ),
-                    (make_url_path_regex(base, trailing_slash=False), AddSlashHandler),
+                    (
+                        make_url_path_regex(base, trailing_slash=False),
+                        AddSlashHandler,
+                    ),
                 ]
             )
+
 
         return tornado.web.Application(
             routes,  # type: ignore[arg-type]
@@ -392,7 +398,7 @@ class Server(object):
         )
 
     def _set_state(self, new_state):
-        LOGGER.debug("Server state: %s -> %s" % (self._state, new_state))
+        LOGGER.debug(f"Server state: {self._state} -> {new_state}")
         self._state = new_state
 
     @property
@@ -414,17 +420,19 @@ class Server(object):
         try:
             if self._state == State.INITIAL:
                 self._set_state(State.WAITING_FOR_FIRST_BROWSER)
-            elif self._state == State.ONE_OR_MORE_BROWSERS_CONNECTED:
-                pass
-            else:
-                raise RuntimeError("Bad server state at start: %s" % self._state)
+            elif self._state != State.ONE_OR_MORE_BROWSERS_CONNECTED:
+                raise RuntimeError(f"Bad server state at start: {self._state}")
 
             if on_started is not None:
                 on_started(self)
 
             while not self._must_stop.is_set():
 
-                if self._state == State.WAITING_FOR_FIRST_BROWSER:
+                if (
+                    self._state == State.WAITING_FOR_FIRST_BROWSER
+                    or self._state != State.ONE_OR_MORE_BROWSERS_CONNECTED
+                    and self._state == State.NO_BROWSERS_CONNECTED
+                ):
                     pass
 
                 elif self._state == State.ONE_OR_MORE_BROWSERS_CONNECTED:
@@ -446,9 +454,6 @@ class Server(object):
                                 self._close_report_session(session_info.session.id)
                             yield
                         yield
-
-                elif self._state == State.NO_BROWSERS_CONNECTED:
-                    pass
 
                 else:
                     # Break out of the thread loop if we encounter any other state.
@@ -502,13 +507,13 @@ Please report this bug at https://github.com/streamlit/streamlit/issues.
 
                 # This session has probably cached this message. Send
                 # a reference instead.
-                LOGGER.debug("Sending cached message ref (hash=%s)" % msg.hash)
+                LOGGER.debug(f"Sending cached message ref (hash={msg.hash})")
                 msg_to_send = create_reference_msg(msg)
 
             # Cache the message so it can be referenced in the future.
             # If the message is already cached, this will reset its
             # age.
-            LOGGER.debug("Caching message (hash=%s)" % msg.hash)
+            LOGGER.debug(f"Caching message (hash={msg.hash})")
             self._message_cache.add_message(
                 msg, session_info.session, session_info.report_run_count
             )
@@ -666,9 +671,7 @@ class _BrowserWebSocketHandler(tornado.websocket.WebSocketHandler):
 
         (See the docstring in the parent class.)
         """
-        if config.get_option("server.enableWebsocketCompression"):
-            return {}
-        return None
+        return {} if config.get_option("server.enableWebsocketCompression") else None
 
     @tornado.gen.coroutine
     def on_message(self, payload):

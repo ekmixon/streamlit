@@ -269,6 +269,5 @@ def _get_widget_id(
     """
     if user_key is not None:
         return user_key
-    else:
-        h = str(hash((element_type, element_proto.SerializeToString())))
-        return f"{GENERATED_WIDGET_KEY_PREFIX}-{h}"
+    h = str(hash((element_type, element_proto.SerializeToString())))
+    return f"{GENERATED_WIDGET_KEY_PREFIX}-{h}"

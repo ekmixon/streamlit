@@ -25,11 +25,7 @@ from streamlit.media_file_manager import MediaFileManager, _calculate_file_id, M
 
 
 def random_coordinates():
-    return "{}.{}.{}".format(
-        random.randint(1, 4),
-        (random.randint(1, 12), random.randint(1, 12)),
-        random.randint(1, 99),
-    )
+    return f"{random.randint(1, 4)}.{(random.randint(1, 12), random.randint(1, 12))}.{random.randint(1, 99)}"
 
 
 # Smallest possible "real" media files for a handful of different formats.
@@ -69,10 +65,7 @@ IMAGE_FIXTURES = {
     },
 }
 
-ALL_FIXTURES = dict()
-ALL_FIXTURES.update(AUDIO_FIXTURES)
-ALL_FIXTURES.update(VIDEO_FIXTURES)
-ALL_FIXTURES.update(IMAGE_FIXTURES)
+ALL_FIXTURES = AUDIO_FIXTURES | VIDEO_FIXTURES | IMAGE_FIXTURES
 
 
 class MediaFileManagerTest(AsyncTestCase):

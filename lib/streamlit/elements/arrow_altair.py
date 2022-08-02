@@ -265,9 +265,7 @@ def _is_date_column(df: pd.DataFrame, name: str) -> bool:
 
     """
     column = df[name]
-    if column.size == 0:
-        return False
-    return isinstance(column[0], date)
+    return False if column.size == 0 else isinstance(column[0], date)
 
 
 def _generate_chart(
@@ -288,11 +286,7 @@ def _generate_chart(
 
     data = pd.melt(data.reset_index(), id_vars=[index_name])
 
-    if chart_type == ChartType.AREA:
-        opacity = {"value": 0.7}
-    else:
-        opacity = {"value": 1.0}
-
+    opacity = {"value": 0.7} if chart_type == ChartType.AREA else {"value": 1.0}
     # Set the X and Y axes' scale to "utc" if they contain date values.
     # This causes time data to be displayed in UTC, rather the user's local
     # time zone. (By default, vega-lite displays time data in the browser's
@@ -309,9 +303,10 @@ def _generate_chart(
     if chart_type == ChartType.BAR and not _is_date_column(data, index_name):
         x_type = "ordinal"
 
-    chart = (
+    return (
         getattr(
-            alt.Chart(data, width=width, height=height), "mark_" + chart_type.value
+            alt.Chart(data, width=width, height=height),
+            "mark_" + chart_type.value,
         )()
         .encode(
             alt.X(index_name, title="", scale=x_scale, type=x_type),
@@ -322,7 +317,6 @@ def _generate_chart(
         )
         .interactive()
     )
-    return chart
 
 
 def marshall(
@@ -345,7 +339,7 @@ def marshall(
         """Altair data transformer that returns a fake named dataset with the
         object id."""
         datasets[id(data)] = data
-        return {"name": str(id(data))}
+        return {"name": id(data)}
 
     alt.data_transformers.register("id", id_transform)
 

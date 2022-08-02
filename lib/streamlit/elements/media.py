@@ -135,8 +135,7 @@ def _reshape_youtube_url(url):
     .. output::
         https://www.youtube.com/embed/_T8LGqJtuGc
     """
-    match = YOUTUBE_RE.match(url)
-    if match:
+    if match := YOUTUBE_RE.match(url):
         return "https://www.youtube.com/embed/{code}".format(**match.groupdict())
     return None
 
@@ -169,13 +168,13 @@ def _marshall_av_media(coordinates, proto, data, mimetype):
     elif isinstance(data, io.BytesIO):
         data.seek(0)
         data = data.getvalue()
-    elif isinstance(data, io.RawIOBase) or isinstance(data, io.BufferedReader):
+    elif isinstance(data, (io.RawIOBase, io.BufferedReader)):
         data.seek(0)
         data = data.read()
     elif type_util.is_type(data, "numpy.ndarray"):
         data = data.tobytes()
     else:
-        raise RuntimeError("Invalid binary data format: %s" % type(data))
+        raise RuntimeError(f"Invalid binary data format: {type(data)}")
 
     this_file = media_file_manager.add(data, mimetype, coordinates)
     proto.url = this_file.url
@@ -207,8 +206,7 @@ def marshall_video(coordinates, proto, data, mimetype="video/mp4", start_time=0)
     proto.type = VideoProto.Type.NATIVE
 
     if isinstance(data, str) and url(data):
-        youtube_url = _reshape_youtube_url(data)
-        if youtube_url:
+        if youtube_url := _reshape_youtube_url(data):
             proto.url = youtube_url
             proto.type = VideoProto.Type.YOUTUBE_IFRAME
         else:

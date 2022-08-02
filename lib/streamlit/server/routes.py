@@ -83,7 +83,7 @@ class MediaFileHandler(tornado.web.StaticFileHandler):
         try:
             media_file_manager.get(absolute_path)
         except KeyError:
-            LOGGER.error("MediaFileManager: Missing file %s" % absolute_path)
+            LOGGER.error(f"MediaFileManager: Missing file {absolute_path}")
             raise tornado.web.HTTPError(404, "not found")
 
         return absolute_path
@@ -105,22 +105,21 @@ class MediaFileHandler(tornado.web.StaticFileHandler):
 
     @classmethod
     def get_content(cls, abspath, start=None, end=None):
-        LOGGER.debug("MediaFileHandler: GET %s" % abspath)
+        LOGGER.debug(f"MediaFileHandler: GET {abspath}")
 
         try:
             # abspath is the hash as used `get_absolute_path`
             media = media_file_manager.get(abspath)
         except:
-            LOGGER.error("MediaFileManager: Missing file %s" % abspath)
+            LOGGER.error(f"MediaFileManager: Missing file {abspath}")
             return
 
-        LOGGER.debug("MediaFileManager: Sending %s file %s" % (media.mimetype, abspath))
-
-        # If there is no start and end, just return the full content
-        if start is None and end is None:
-            return media.content
+        LOGGER.debug(f"MediaFileManager: Sending {media.mimetype} file {abspath}")
 
         if start is None:
+            if end is None:
+                return media.content
+
             start = 0
         if end is None:
             end = len(media.content)
@@ -248,7 +247,7 @@ class MessageCacheHandler(tornado.web.RequestHandler):
             self.set_status(404)
             raise tornado.web.Finish()
 
-        LOGGER.debug("MessageCache HIT [hash=%s]" % msg_hash)
+        LOGGER.debug(f"MessageCache HIT [hash={msg_hash}]")
         msg_str = serialize_forward_msg(message)
         self.set_header("Content-Type", "application/octet-stream")
         self.write(msg_str)

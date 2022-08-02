@@ -16,16 +16,16 @@ import streamlit as st
 
 options = ("male", "female")
 i1 = st.multiselect("multiselect 1", options)
-st.text("value 1: %s" % i1)
+st.text(f"value 1: {i1}")
 
 i2 = st.multiselect("multiselect 2", options, format_func=lambda x: x.capitalize())
-st.text("value 2: %s" % i2)
+st.text(f"value 2: {i2}")
 
 i3 = st.multiselect("multiselect 3", [])
-st.text("value 3: %s" % i3)
+st.text(f"value 3: {i3}")
 
 i4 = st.multiselect("multiselect 4", ["coffee", "tea", "water"], ["tea", "water"])
-st.text("value 4: %s" % i4)
+st.text(f"value 4: {i4}")
 
 i5 = st.multiselect(
     "multiselect 5",
@@ -36,7 +36,7 @@ i5 = st.multiselect(
         )
     ),
 )
-st.text("value 5: %s" % i5)
+st.text(f"value 5: {i5}")
 
 if st._is_running_with_streamlit:
 

@@ -86,8 +86,9 @@ class SelectboxMixin:
 
         if not isinstance(index, int):
             raise StreamlitAPIException(
-                "Selectbox Value has invalid type: %s" % type(index).__name__
+                f"Selectbox Value has invalid type: {type(index).__name__}"
             )
+
 
         if len(options) > 0 and not 0 <= index < len(options):
             raise StreamlitAPIException(
@@ -110,9 +111,7 @@ class SelectboxMixin:
             )
 
         def serialize_select_box(v):
-            if len(options) == 0:
-                return 0
-            return index_(options, v)
+            return 0 if len(options) == 0 else index_(options, v)
 
         current_value, set_frontend_value = register_widget(
             "selectbox",

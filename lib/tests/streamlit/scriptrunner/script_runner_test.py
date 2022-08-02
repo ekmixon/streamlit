@@ -452,8 +452,9 @@ class ScriptRunnerTest(AsyncTestCase):
         # Ensure that each runner's radio value is as expected.
         for ii, runner in enumerate(runners):
             self._assert_text_deltas(
-                runner, ["False", "ahoy!", "%s" % ii, "False", "loop_forever"]
+                runner, ["False", "ahoy!", f"{ii}", "False", "loop_forever"]
             )
+
             runner.enqueue_shutdown()
 
         time.sleep(0.1)
@@ -700,22 +701,17 @@ def require_widgets_deltas(
     num_complete = 0
     while time.time() - t0 < timeout:
         time.sleep(0.1)
-        num_complete = sum(
-            1 for runner in runners if len(runner.deltas()) >= NUM_DELTAS
-        )
+        num_complete = sum(len(runner.deltas()) >= NUM_DELTAS for runner in runners)
         if num_complete == len(runners):
             return
 
     # If we get here, at least 1 runner hasn't yet completed before our
     # timeout. Create an error string for debugging.
-    err_string = (
-        "require_widgets_deltas() timed out after {}s ({}/{} runners complete)".format(
-            timeout, num_complete, len(runners)
-        )
-    )
+    err_string = f"require_widgets_deltas() timed out after {timeout}s ({num_complete}/{len(runners)} runners complete)"
+
     for runner in runners:
         if len(runner.deltas()) < NUM_DELTAS:
-            err_string += "\n- incomplete deltas: {}".format(runner.text_deltas())
+            err_string += f"\n- incomplete deltas: {runner.text_deltas()}"
 
     # Shutdown all runners before throwing an error, so that the script
     # doesn't hang forever.
